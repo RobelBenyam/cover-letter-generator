@@ -58,6 +58,9 @@ app.post("/api/generate", async (req, res) => {
       jobListingUrl,
       jobWebsiteUrl,
       managerUrl,
+      companyName,
+      roleTitle,
+      companyContext,
     } = req.body || {};
 
     if (typeof profile !== "string" || !profile.trim()) {
@@ -76,6 +79,9 @@ app.post("/api/generate", async (req, res) => {
       jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
       managerUrl: String(managerUrl || "").trim(),
       managerNameGuess,
+      companyName: String(companyName || "").trim(),
+      roleTitle: String(roleTitle || "").trim(),
+      companyContext: String(companyContext || "").trim(),
     });
 
     res.json({ letter });
@@ -92,6 +98,9 @@ app.post("/api/chat", async (req, res) => {
       jobListingUrl,
       jobWebsiteUrl,
       managerUrl,
+      companyName,
+      roleTitle,
+      companyContext,
       currentLetter,
       chatHistory,
       userMessage,
@@ -114,6 +123,9 @@ app.post("/api/chat", async (req, res) => {
       jobListingUrl: String(jobListingUrl || "").trim(),
       jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
       managerUrl: String(managerUrl || "").trim(),
+      companyName: String(companyName || "").trim(),
+      roleTitle: String(roleTitle || "").trim(),
+      companyContext: String(companyContext || "").trim(),
       currentLetter,
       chatHistory: Array.isArray(chatHistory) ? chatHistory : [],
       userMessage: userMessage.trim(),

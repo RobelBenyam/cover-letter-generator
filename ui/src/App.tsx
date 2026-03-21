@@ -35,6 +35,9 @@ async function api<T>(
 
 export default function App() {
   const [profile, setProfile] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [roleTitle, setRoleTitle] = useState("");
+  const [companyContext, setCompanyContext] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [letter, setLetter] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatTurn[]>([]);
@@ -120,6 +123,9 @@ export default function App() {
         jobListingUrl: "",
         jobWebsiteUrl: "",
         managerUrl: "",
+        companyName,
+        roleTitle,
+        companyContext,
       }),
     });
     setLoadingGen(false);
@@ -128,7 +134,7 @@ export default function App() {
       return;
     }
     setLetter(data?.letter || "");
-  }, [profile, jobDescription]);
+  }, [profile, jobDescription, companyName, roleTitle, companyContext]);
 
   const sendChat = useCallback(async () => {
     const msg = chatInput.trim();
@@ -156,6 +162,9 @@ export default function App() {
         jobListingUrl: "",
         jobWebsiteUrl: "",
         managerUrl: "",
+        companyName,
+        roleTitle,
+        companyContext,
         currentLetter: letter,
         chatHistory,
         userMessage: msg,
@@ -175,7 +184,16 @@ export default function App() {
       ...nextHistory,
       { role: "assistant", content: assistantMsg },
     ]);
-  }, [chatInput, letter, chatHistory, profile, jobDescription]);
+  }, [
+    chatInput,
+    letter,
+    chatHistory,
+    profile,
+    jobDescription,
+    companyName,
+    roleTitle,
+    companyContext,
+  ]);
 
   const copyLetter = useCallback(() => {
     if (!letter) return;
@@ -274,6 +292,47 @@ export default function App() {
               </div>
             </>
           )}
+          <div className="field field--tight-top">
+            <label htmlFor="company-name">Company name</label>
+            <input
+              id="company-name"
+              type="text"
+              {...noGrammarly}
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Employer or brand hiring you (from posting or research)"
+              autoComplete="off"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="role-title">Role title (optional)</label>
+            <input
+              id="role-title"
+              type="text"
+              {...noGrammarly}
+              value={roleTitle}
+              onChange={(e) => setRoleTitle(e.target.value)}
+              placeholder="e.g. Account Executive — New Business"
+              autoComplete="off"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="company-research">Company research (optional)</label>
+            <p className="section-hint" style={{ marginTop: 0 }}>
+              Paste what you actually know:
+              website About, LinkedIn company summary, product focus, ICP,
+              mission.
+            </p>
+            <textarea
+              id="company-research"
+              {...noGrammarly}
+              value={companyContext}
+              onChange={(e) => setCompanyContext(e.target.value)}
+              rows={5}
+              placeholder="Short notes in your own words (not the full JD)."
+              autoComplete="off"
+            />
+          </div>
           <div className="field field--tight-top field--grow">
             <label htmlFor="jd">Job description</label>
             <textarea

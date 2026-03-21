@@ -76,7 +76,10 @@ async function main() {
 
   Single job:
     node generate.mjs --jd-file ./jd.txt --company "Acme" --role "Account Executive" \\
+      [--company-name X] [--role-title Y] [--company-context ./research.txt] \\
       [--linkedin URL] [--careers-url URL] [--manager-url URL]
+
+  CSV columns (optional): Company name, Role title, Company context
 
   Web UI: npm run dev
 
@@ -121,6 +124,12 @@ async function main() {
       jobWebsiteUrl: argValue("--careers-url") || "",
       managerUrl,
       managerNameGuess: name,
+      companyName:
+        argValue("--company-name") || argValue("--company") || "",
+      roleTitle: argValue("--role-title") || argValue("--role") || "",
+      companyContext: argValue("--company-context")
+        ? readFileSync(argValue("--company-context"), "utf8").trim()
+        : "",
     });
     const fn = `cover-${slugify(company)}-${slugify(role)}.txt`;
     const path = join(outDir, fn);
@@ -159,6 +168,22 @@ async function main() {
       "manager linkedin",
       "hiring manager",
     ]);
+    const companyName = pickColumn(row, [
+      "Company name",
+      "company",
+      "company_name",
+    ]);
+    const roleTitle = pickColumn(row, [
+      "Role title",
+      "role_title",
+      "Job title",
+    ]);
+    const companyContext = pickColumn(row, [
+      "Company context",
+      "company context",
+      "Company research",
+      "company_research",
+    ]);
 
     if (!jd) {
       console.warn(
@@ -177,6 +202,9 @@ async function main() {
       jobWebsiteUrl: jobWebsite,
       managerUrl,
       managerNameGuess,
+      companyName,
+      roleTitle,
+      companyContext,
     });
 
     const base = slugify(`${i}-${jobListing || jobWebsite || "job"}`);

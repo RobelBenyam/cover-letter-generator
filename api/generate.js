@@ -21,6 +21,9 @@ export default async function handler(req, res) {
       jobListingUrl = "",
       jobWebsiteUrl = "",
       managerUrl = "",
+      companyName = "",
+      roleTitle = "",
+      companyContext = "",
     } = body;
 
     if (typeof profile !== "string" || !profile.trim()) {
@@ -40,6 +43,9 @@ export default async function handler(req, res) {
       jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
       managerUrl: String(managerUrl || "").trim(),
       managerNameGuess,
+      companyName: String(companyName || "").trim(),
+      roleTitle: String(roleTitle || "").trim(),
+      companyContext: String(companyContext || "").trim(),
     });
 
     res.status(200).json({ letter });
