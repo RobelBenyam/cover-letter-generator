@@ -1,0 +1,8 @@
+{
+  "outputDirectory": "ui/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "functions": {
+    "api/generate.js": { "maxDuration": 10 },
+    "api/chat.js": { "maxDuration": 10 }
+  }
+}

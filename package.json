@@ -1,0 +1,28 @@
+{
+  "name": "@atlasco/cover-letter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node generate.mjs",
+    "server": "node server.mjs",
+    "dev": "concurrently -k -n api,ui -c blue,green \"node server.mjs\" \"vite --config ui/vite.config.ts\"",
+    "build": "vite build --config ui/vite.config.ts",
+    "build:ui": "vite build --config ui/vite.config.ts",
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2",
+    "csv-parse": "^5.6.0",
+    "express": "^4.21.2",
+    "openai": "^4.80.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}
