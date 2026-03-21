@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
+import bundledResume from "../../profile.example.txt?raw";
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
 
 const PROFILE_STORAGE_KEY = "atlasco-cover-profile";
+
+/** Tells Grammarly (browser extension) not to inject on this field — optional for you to remove */
+const noGrammarly = {
+  "data-gramm": "false",
+  "data-gramm_editor": "false",
+} as const;
 
 async function api<T>(
   path: string,
@@ -42,16 +49,20 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
+      let stored = "";
       try {
-        const fromBrowser = localStorage.getItem(PROFILE_STORAGE_KEY);
-        if (fromBrowser !== null) {
-          setProfile(fromBrowser);
-          if (fromBrowser.trim()) setEditProfileOpen(false);
-          return;
-        }
+        stored = localStorage.getItem(PROFILE_STORAGE_KEY) ?? "";
       } catch {
         /* private mode */
       }
+
+      // Only trust localStorage if it has real content (empty string used to block profile.txt before)
+      if (stored.trim()) {
+        setProfile(stored);
+        setEditProfileOpen(false);
+        return;
+      }
+
       const { data, error: err } = await api<{ profile: string }>(
         "/api/profile"
       );
@@ -63,7 +74,18 @@ export default function App() {
         } catch {
           /* ignore */
         }
-      } else if (err && !err.includes("404")) {
+        return;
+      }
+
+      const fallback = bundledResume.trim();
+      setProfile(fallback);
+      setEditProfileOpen(false);
+      try {
+        localStorage.setItem(PROFILE_STORAGE_KEY, fallback);
+      } catch {
+        /* ignore */
+      }
+      if (err && !String(err).includes("404") && !String(err).includes("Failed to fetch")) {
         setError(err);
       }
     })();
@@ -168,9 +190,11 @@ export default function App() {
         <div className="app-header-titles">
           <h1>Cover letter</h1>
           <p className="sub">
+            Personal use · not a shared product. Your resume stays on this device;
+            it’s only sent to OpenAI when you generate or chat.{" "}
             {import.meta.env.PROD
-              ? "Resume stays in this browser. API key lives in Vercel env only."
-              : "Local: key in .env · resume in this browser + profile.txt when you save."}
+              ? "API key is in Vercel env."
+              : "Local: key in .env; Save also writes profile.txt for the CLI."}
           </p>
         </div>
         <span
@@ -184,7 +208,7 @@ export default function App() {
 
       <div className="layout">
         <div className="panel panel--inputs">
-          <h2 className="panel-title">Inputs</h2>
+          <h2 className="panel-title">Your inputs</h2>
           {profile.trim() && !editProfileOpen ? (
             <div className="resume-card">
               <div className="resume-card-main">
@@ -205,7 +229,7 @@ export default function App() {
                     </p>
                   ) : (
                     <p className="resume-card-hint">
-                      Use Edit to replace your resume text anytime.
+                      Personal · edit anytime. Nothing is stored on our servers.
                     </p>
                   )}
                 </div>
@@ -221,11 +245,11 @@ export default function App() {
           ) : (
             <>
               <div className="field">
-                <label>Resume / profile</label>
+                <label htmlFor="profile-edit">Your resume (private — this device)</label>
                 <textarea
+                  id="profile-edit"
                   value={profile}
                   onChange={(e) => setProfile(e.target.value)}
-                  placeholder="Paste your resume — then Save"
                   rows={8}
                 />
               </div>
@@ -256,7 +280,7 @@ export default function App() {
               id="jd"
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the full posting (role, responsibilities, requirements)."
+              placeholder="Job posting: role, responsibilities, requirements."
             />
           </div>
           <div className="row row--actions">

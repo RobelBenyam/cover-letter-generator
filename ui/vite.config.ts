@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: 5173,
+      fs: {
+        allow: [coverLetterRoot],
+      },
       proxy: {
         "/api": {
           target: `http://localhost:${apiPort}`,
