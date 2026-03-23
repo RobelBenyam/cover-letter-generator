@@ -2,8 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 import bundledResume from "../../profile.example.txt?raw";
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
+type SavedLetter = {
+  id: string;
+  companyName: string;
+  roleTitle: string;
+  companyContext: string;
+  jobDescription: string;
+  letter: string;
+  chatHistory: ChatTurn[];
+  createdAt: string;
+  updatedAt: string;
+};
 
 const PROFILE_STORAGE_KEY = "atlasco-cover-profile";
+const LETTERS_STORAGE_KEY = "atlasco-cover-letters";
 
 /** Tells Grammarly (browser extension) not to inject on this field — optional for you to remove */
 const noGrammarly = {
@@ -47,6 +59,9 @@ export default function App() {
   const [error, setError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
   const [copyOk, setCopyOk] = useState(false);
+  const [draftOk, setDraftOk] = useState(false);
+  const [savedLetters, setSavedLetters] = useState<SavedLetter[]>([]);
+  const [activeLetterId, setActiveLetterId] = useState<string | null>(null);
   /** When false and profile exists, show compact banner instead of textarea */
   const [editProfileOpen, setEditProfileOpen] = useState(false);
 
@@ -94,6 +109,128 @@ export default function App() {
     })();
   }, []);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LETTERS_STORAGE_KEY) || "[]";
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const valid = parsed.filter((x) => {
+        return (
+          x &&
+          typeof x.id === "string" &&
+          typeof x.letter === "string" &&
+          typeof x.companyName === "string"
+        );
+      }) as SavedLetter[];
+      setSavedLetters(valid);
+    } catch {
+      /* ignore corrupt local storage */
+    }
+  }, []);
+
+  const persistLetters = useCallback(
+    (next: SavedLetter[]) => {
+      try {
+        localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        setError("Could not save letters to browser storage.");
+        return false;
+      }
+      setSavedLetters(next);
+      return true;
+    },
+    [setSavedLetters]
+  );
+
+  const saveCurrentDraft = useCallback(
+    (
+      letterText = letter,
+      history = chatHistory,
+      options?: { forceNew?: boolean; clearChatInput?: boolean }
+    ) => {
+      if (!letterText.trim()) {
+        setError("Generate or write a letter before saving.");
+        return;
+      }
+      const now = new Date().toISOString();
+      const base: SavedLetter = {
+        id:
+          options?.forceNew || !activeLetterId
+            ? (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`)
+            : activeLetterId,
+        companyName: companyName.trim(),
+        roleTitle: roleTitle.trim(),
+        companyContext: companyContext.trim(),
+        jobDescription: jobDescription.trim(),
+        letter: letterText,
+        chatHistory: history,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const existing = options?.forceNew
+        ? null
+        : savedLetters.find((x) => x.id === activeLetterId) || null;
+      if (existing) {
+        base.createdAt = existing.createdAt;
+      }
+
+      const next = existing
+        ? savedLetters.map((x) => (x.id === base.id ? base : x))
+        : [base, ...savedLetters];
+      if (!persistLetters(next)) return;
+      setActiveLetterId(base.id);
+      setDraftOk(true);
+      window.setTimeout(() => setDraftOk(false), 1600);
+      if (options?.clearChatInput) setChatInput("");
+    },
+    [
+      letter,
+      chatHistory,
+      activeLetterId,
+      companyName,
+      roleTitle,
+      companyContext,
+      jobDescription,
+      savedLetters,
+      persistLetters,
+    ]
+  );
+
+  const loadDraft = useCallback((item: SavedLetter) => {
+    setCompanyName(item.companyName || "");
+    setRoleTitle(item.roleTitle || "");
+    setCompanyContext(item.companyContext || "");
+    setJobDescription(item.jobDescription || "");
+    setLetter(item.letter || "");
+    setChatHistory(Array.isArray(item.chatHistory) ? item.chatHistory : []);
+    setActiveLetterId(item.id);
+    setError("");
+  }, []);
+
+  const deleteDraft = useCallback(
+    (id: string) => {
+      const next = savedLetters.filter((x) => x.id !== id);
+      if (!persistLetters(next)) return;
+      if (activeLetterId === id) setActiveLetterId(null);
+    },
+    [savedLetters, persistLetters, activeLetterId]
+  );
+
+  const startNewDraft = useCallback(() => {
+    setCompanyName("");
+    setRoleTitle("");
+    setCompanyContext("");
+    setJobDescription("");
+    setLetter("");
+    setChatHistory([]);
+    setChatInput("");
+    setActiveLetterId(null);
+    setDraftOk(false);
+    setCopyOk(false);
+    setError("");
+  }, []);
+
   const saveProfile = useCallback(async () => {
     setError("");
     setSaveOk(false);
@@ -133,8 +270,17 @@ export default function App() {
       setError(err);
       return;
     }
-    setLetter(data?.letter || "");
-  }, [profile, jobDescription, companyName, roleTitle, companyContext]);
+    const generated = data?.letter || "";
+    setLetter(generated);
+    saveCurrentDraft(generated, [], { clearChatInput: true });
+  }, [
+    profile,
+    jobDescription,
+    companyName,
+    roleTitle,
+    companyContext,
+    saveCurrentDraft,
+  ]);
 
   const sendChat = useCallback(async () => {
     const msg = chatInput.trim();
@@ -179,11 +325,14 @@ export default function App() {
     }
 
     const assistantMsg = data?.message || "Updated.";
-    setLetter(data?.letter || letter);
-    setChatHistory([
+    const nextLetter = data?.letter || letter;
+    const nextChatHistory: ChatTurn[] = [
       ...nextHistory,
       { role: "assistant", content: assistantMsg },
-    ]);
+    ];
+    setLetter(nextLetter);
+    setChatHistory(nextChatHistory);
+    saveCurrentDraft(nextLetter, nextChatHistory, { clearChatInput: true });
   }, [
     chatInput,
     letter,
@@ -193,6 +342,7 @@ export default function App() {
     companyName,
     roleTitle,
     companyContext,
+    saveCurrentDraft,
   ]);
 
   const copyLetter = useCallback(() => {
@@ -351,8 +501,36 @@ export default function App() {
             >
               {loadingGen ? "Generating…" : "Generate cover letter"}
             </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => saveCurrentDraft()}
+              disabled={!letter.trim()}
+            >
+              {activeLetterId ? "Update saved draft" : "Save draft"}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => saveCurrentDraft(letter, chatHistory, { forceNew: true })}
+              disabled={!letter.trim()}
+            >
+              Save as new
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={startNewDraft}
+            >
+              Clean up + new cover letter
+            </button>
             {!profile.trim() ? (
               <span className="field-hint">Add a resume first (Edit resume).</span>
+            ) : null}
+            {draftOk ? (
+              <span className="field-hint" style={{ color: "var(--muted)" }}>
+                Draft saved
+              </span>
             ) : null}
           </div>
         </div>
@@ -378,6 +556,59 @@ export default function App() {
             >
               {copyOk ? "Copied" : "Copy letter"}
             </button>
+          </div>
+
+          <div className="chat-block">
+            <h3 className="chat-block-title">Saved letters</h3>
+            <p className="section-hint">
+              Stored in this browser. Load any draft to continue editing.
+            </p>
+            <div className="chat-log">
+              {savedLetters.length === 0 ? (
+                <span style={{ color: "var(--muted)" }}>
+                  No saved drafts yet.
+                </span>
+              ) : (
+                [...savedLetters]
+                  .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+                  .map((item) => {
+                    const isActive = item.id === activeLetterId;
+                    const title = item.companyName || "Untitled company";
+                    const role = item.roleTitle || "Untitled role";
+                    const when = new Date(item.updatedAt).toLocaleString();
+                    return (
+                      <div
+                        key={item.id}
+                        className={`chat-msg ${isActive ? "assistant" : ""}`}
+                        style={{ display: "grid", gap: "0.4rem" }}
+                      >
+                        <div>
+                          <span className="who">{title}</span> · {role}
+                        </div>
+                        <span style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
+                          Updated {when}
+                        </span>
+                        <div className="row">
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => loadDraft(item)}
+                          >
+                            Load
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => deleteDraft(item.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
           </div>
 
           <div className="chat-block">
