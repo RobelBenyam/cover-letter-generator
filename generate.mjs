@@ -6,7 +6,6 @@ import { parse } from "csv-parse/sync";
 import {
   loadEnvFile,
   createOpenAIClient,
-  guessNameFromLinkedIn,
   generateCoverLetter,
 } from "./lib/openai-letter.mjs";
 
@@ -77,13 +76,13 @@ async function main() {
   Single job:
     node generate.mjs --jd-file ./jd.txt --company "Acme" --role "Account Executive" \\
       [--company-name X] [--role-title Y] [--company-context ./research.txt] \\
-      [--linkedin URL] [--careers-url URL] [--manager-url URL]
+      [--linkedin URL] [--careers-url URL]
 
   CSV columns (optional): Company name, Role title, Company context
 
   Web UI: npm run dev
 
-  Env: OPENAI_API_KEY (or .env in this folder). Optional: OPENAI_MODEL (default gpt-4o-mini).
+  Env: OPENAI_API_KEY (or .env in this folder). Optional: OPENAI_MODEL (default gpt-4.1).
 `);
     process.exit(1);
   }
@@ -115,15 +114,11 @@ async function main() {
     const jd = readFileSync(singleJd, "utf8").trim();
     const company = argValue("--company") || "the company";
     const role = argValue("--role") || "the role";
-    const managerUrl = argValue("--manager-url") || "";
-    const name = managerUrl ? guessNameFromLinkedIn(managerUrl) : null;
     const letter = await generateCoverLetter(openai, {
       profile,
       jobDescription: jd,
       jobListingUrl: argValue("--linkedin") || "",
       jobWebsiteUrl: argValue("--careers-url") || "",
-      managerUrl,
-      managerNameGuess: name,
       companyName:
         argValue("--company-name") || argValue("--company") || "",
       roleTitle: argValue("--role-title") || argValue("--role") || "",
@@ -162,12 +157,6 @@ async function main() {
     ]);
     const jobWebsite = pickColumn(row, ["Job website", "job website", "careers"]);
     const jd = pickColumn(row, ["Job Description", "job description", "description"]);
-    const managerUrl = pickColumn(row, [
-      "Potential managers Linked ins:",
-      "Potential managers Linked ins",
-      "manager linkedin",
-      "hiring manager",
-    ]);
     const companyName = pickColumn(row, [
       "Company name",
       "company",
@@ -191,17 +180,11 @@ async function main() {
       );
     }
 
-    const managerNameGuess = managerUrl
-      ? guessNameFromLinkedIn(managerUrl)
-      : null;
-
     const letter = await generateCoverLetter(openai, {
       profile,
       jobDescription: jd,
       jobListingUrl: jobListing,
       jobWebsiteUrl: jobWebsite,
-      managerUrl,
-      managerNameGuess,
       companyName,
       roleTitle,
       companyContext,

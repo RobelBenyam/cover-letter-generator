@@ -6,6 +6,8 @@ type SavedLetter = {
   id: string;
   companyName: string;
   roleTitle: string;
+  jobListingUrl: string;
+  jobWebsiteUrl: string;
   companyContext: string;
   jobDescription: string;
   letter: string;
@@ -49,6 +51,8 @@ export default function App() {
   const [profile, setProfile] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [roleTitle, setRoleTitle] = useState("");
+  const [jobListingUrl, setJobListingUrl] = useState("");
+  const [jobWebsiteUrl, setJobWebsiteUrl] = useState("");
   const [companyContext, setCompanyContext] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [letter, setLetter] = useState("");
@@ -160,6 +164,8 @@ export default function App() {
             : activeLetterId,
         companyName: companyName.trim(),
         roleTitle: roleTitle.trim(),
+        jobListingUrl: jobListingUrl.trim(),
+        jobWebsiteUrl: jobWebsiteUrl.trim(),
         companyContext: companyContext.trim(),
         jobDescription: jobDescription.trim(),
         letter: letterText,
@@ -190,6 +196,8 @@ export default function App() {
       activeLetterId,
       companyName,
       roleTitle,
+      jobListingUrl,
+      jobWebsiteUrl,
       companyContext,
       jobDescription,
       savedLetters,
@@ -200,6 +208,8 @@ export default function App() {
   const loadDraft = useCallback((item: SavedLetter) => {
     setCompanyName(item.companyName || "");
     setRoleTitle(item.roleTitle || "");
+    setJobListingUrl(item.jobListingUrl || "");
+    setJobWebsiteUrl(item.jobWebsiteUrl || "");
     setCompanyContext(item.companyContext || "");
     setJobDescription(item.jobDescription || "");
     setLetter(item.letter || "");
@@ -220,6 +230,8 @@ export default function App() {
   const startNewDraft = useCallback(() => {
     setCompanyName("");
     setRoleTitle("");
+    setJobListingUrl("");
+    setJobWebsiteUrl("");
     setCompanyContext("");
     setJobDescription("");
     setLetter("");
@@ -257,9 +269,8 @@ export default function App() {
       body: JSON.stringify({
         profile,
         jobDescription,
-        jobListingUrl: "",
-        jobWebsiteUrl: "",
-        managerUrl: "",
+        jobListingUrl,
+        jobWebsiteUrl,
         companyName,
         roleTitle,
         companyContext,
@@ -278,6 +289,8 @@ export default function App() {
     jobDescription,
     companyName,
     roleTitle,
+    jobListingUrl,
+    jobWebsiteUrl,
     companyContext,
     saveCurrentDraft,
   ]);
@@ -305,9 +318,8 @@ export default function App() {
       body: JSON.stringify({
         profile,
         jobDescription,
-        jobListingUrl: "",
-        jobWebsiteUrl: "",
-        managerUrl: "",
+        jobListingUrl,
+        jobWebsiteUrl,
         companyName,
         roleTitle,
         companyContext,
@@ -339,6 +351,8 @@ export default function App() {
     chatHistory,
     profile,
     jobDescription,
+    jobListingUrl,
+    jobWebsiteUrl,
     companyName,
     roleTitle,
     companyContext,
@@ -463,6 +477,30 @@ export default function App() {
               value={roleTitle}
               onChange={(e) => setRoleTitle(e.target.value)}
               placeholder="e.g. Account Executive — New Business"
+              autoComplete="off"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="job-listing-url">Job listing URL (recommended)</label>
+            <input
+              id="job-listing-url"
+              type="url"
+              {...noGrammarly}
+              value={jobListingUrl}
+              onChange={(e) => setJobListingUrl(e.target.value)}
+              placeholder="LinkedIn or ATS posting URL"
+              autoComplete="off"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="job-website-url">Company website URL (recommended)</label>
+            <input
+              id="job-website-url"
+              type="url"
+              {...noGrammarly}
+              value={jobWebsiteUrl}
+              onChange={(e) => setJobWebsiteUrl(e.target.value)}
+              placeholder="Main site, product page, or careers page"
               autoComplete="off"
             />
           </div>
@@ -615,7 +653,8 @@ export default function App() {
             <h3 className="chat-block-title">Refine with chat</h3>
             <p className="section-hint">
               Ask for edits (tone, length, one extra bullet). The model rewrites
-              the full letter using only your resume facts.
+              the full letter using your resume facts and the website/job research
+              you provide.
             </p>
             <div className="chat-log">
             {chatHistory.length === 0 ? (

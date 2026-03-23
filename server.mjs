@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 import {
   loadEnvFile,
   createOpenAIClient,
-  guessNameFromLinkedIn,
   generateCoverLetter,
   refineCoverLetter,
 } from "./lib/openai-letter.mjs";
@@ -57,7 +56,6 @@ app.post("/api/generate", async (req, res) => {
       jobDescription,
       jobListingUrl,
       jobWebsiteUrl,
-      managerUrl,
       companyName,
       roleTitle,
       companyContext,
@@ -68,17 +66,12 @@ app.post("/api/generate", async (req, res) => {
     }
 
     const openai = createOpenAIClient();
-    const managerNameGuess = managerUrl
-      ? guessNameFromLinkedIn(managerUrl)
-      : null;
 
     const letter = await generateCoverLetter(openai, {
       profile: profile.trim(),
       jobDescription: String(jobDescription || "").trim(),
       jobListingUrl: String(jobListingUrl || "").trim(),
       jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
-      managerUrl: String(managerUrl || "").trim(),
-      managerNameGuess,
       companyName: String(companyName || "").trim(),
       roleTitle: String(roleTitle || "").trim(),
       companyContext: String(companyContext || "").trim(),
@@ -97,7 +90,6 @@ app.post("/api/chat", async (req, res) => {
       jobDescription,
       jobListingUrl,
       jobWebsiteUrl,
-      managerUrl,
       companyName,
       roleTitle,
       companyContext,
@@ -122,7 +114,6 @@ app.post("/api/chat", async (req, res) => {
       jobDescription: String(jobDescription || "").trim(),
       jobListingUrl: String(jobListingUrl || "").trim(),
       jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
-      managerUrl: String(managerUrl || "").trim(),
       companyName: String(companyName || "").trim(),
       roleTitle: String(roleTitle || "").trim(),
       companyContext: String(companyContext || "").trim(),

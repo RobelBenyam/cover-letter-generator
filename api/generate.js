@@ -1,6 +1,5 @@
 import {
   createOpenAIClient,
-  guessNameFromLinkedIn,
   generateCoverLetter,
 } from "../lib/openai-letter.mjs";
 
@@ -20,7 +19,6 @@ export default async function handler(req, res) {
       jobDescription = "",
       jobListingUrl = "",
       jobWebsiteUrl = "",
-      managerUrl = "",
       companyName = "",
       roleTitle = "",
       companyContext = "",
@@ -32,17 +30,12 @@ export default async function handler(req, res) {
     }
 
     const openai = createOpenAIClient();
-    const managerNameGuess = managerUrl
-      ? guessNameFromLinkedIn(managerUrl)
-      : null;
 
     const letter = await generateCoverLetter(openai, {
       profile: profile.trim(),
       jobDescription: String(jobDescription || "").trim(),
       jobListingUrl: String(jobListingUrl || "").trim(),
       jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
-      managerUrl: String(managerUrl || "").trim(),
-      managerNameGuess,
       companyName: String(companyName || "").trim(),
       roleTitle: String(roleTitle || "").trim(),
       companyContext: String(companyContext || "").trim(),
