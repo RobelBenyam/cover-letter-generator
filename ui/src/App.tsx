@@ -634,7 +634,7 @@ export default function App() {
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="e.g. Shorten to 250 words; keep the Raleigh angle"
+              placeholder="e.g. Tighten to ~220 words; keep Frontier metrics"
               aria-label="Chat instruction"
               disabled={!letter.trim()}
               onKeyDown={(e) => {
