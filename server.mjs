@@ -54,8 +54,6 @@ app.post("/api/generate", async (req, res) => {
     const {
       profile,
       jobDescription,
-      jobListingUrl,
-      jobWebsiteUrl,
       companyName,
       roleTitle,
       companyContext,
@@ -70,8 +68,6 @@ app.post("/api/generate", async (req, res) => {
     const letter = await generateCoverLetter(openai, {
       profile: profile.trim(),
       jobDescription: String(jobDescription || "").trim(),
-      jobListingUrl: String(jobListingUrl || "").trim(),
-      jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
       companyName: String(companyName || "").trim(),
       roleTitle: String(roleTitle || "").trim(),
       companyContext: String(companyContext || "").trim(),
@@ -88,8 +84,6 @@ app.post("/api/chat", async (req, res) => {
     const {
       profile,
       jobDescription,
-      jobListingUrl,
-      jobWebsiteUrl,
       companyName,
       roleTitle,
       companyContext,
@@ -112,8 +106,6 @@ app.post("/api/chat", async (req, res) => {
     const out = await refineCoverLetter(openai, {
       profile: profile.trim(),
       jobDescription: String(jobDescription || "").trim(),
-      jobListingUrl: String(jobListingUrl || "").trim(),
-      jobWebsiteUrl: String(jobWebsiteUrl || "").trim(),
       companyName: String(companyName || "").trim(),
       roleTitle: String(roleTitle || "").trim(),
       companyContext: String(companyContext || "").trim(),

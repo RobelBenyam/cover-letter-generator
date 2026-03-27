@@ -75,10 +75,9 @@ async function main() {
 
   Single job:
     node generate.mjs --jd-file ./jd.txt --company "Acme" --role "Account Executive" \\
-      [--company-name X] [--role-title Y] [--company-context ./research.txt] \\
-      [--linkedin URL] [--careers-url URL]
+      [--company-name X] [--role-title Y] [--company-context ./research.txt]
 
-  CSV columns (optional): Company name, Role title, Company context
+  CSV columns (optional): Company name, Role title, Company context, Job Description
 
   Web UI: npm run dev
 
@@ -117,8 +116,6 @@ async function main() {
     const letter = await generateCoverLetter(openai, {
       profile,
       jobDescription: jd,
-      jobListingUrl: argValue("--linkedin") || "",
-      jobWebsiteUrl: argValue("--careers-url") || "",
       companyName:
         argValue("--company-name") || argValue("--company") || "",
       roleTitle: argValue("--role-title") || argValue("--role") || "",
@@ -148,14 +145,6 @@ async function main() {
     const pursue = pickColumn(row, ["Persue?", "Pursue?", "pursue", "Pursue"]);
     if (!hasFlag("--all") && !pursueYes(pursue)) continue;
 
-    const jobListing = pickColumn(row, [
-      "Job Listing",
-      "job listing",
-      "LinkedIn",
-      "linkedin job",
-      "role_link",
-    ]);
-    const jobWebsite = pickColumn(row, ["Job website", "job website", "careers"]);
     const jd = pickColumn(row, ["Job Description", "job description", "description"]);
     const companyName = pickColumn(row, [
       "Company name",
@@ -176,21 +165,19 @@ async function main() {
 
     if (!jd) {
       console.warn(
-        `Row ${i + 2}: empty Job Description — generating a conservative letter from links only (paste JD in column C for better results).`
+        `Row ${i + 2}: empty Job Description — generating a conservative letter (paste full JD for better results).`
       );
     }
 
     const letter = await generateCoverLetter(openai, {
       profile,
       jobDescription: jd,
-      jobListingUrl: jobListing,
-      jobWebsiteUrl: jobWebsite,
       companyName,
       roleTitle,
       companyContext,
     });
 
-    const base = slugify(`${i}-${jobListing || jobWebsite || "job"}`);
+    const base = slugify(`${i}-${companyName || companyContext || "job"}`);
     const path = join(outDir, `cover-${base}.txt`);
     writeFileSync(path, letter + "\n", "utf8");
     console.log(path);
